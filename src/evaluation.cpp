@@ -8,28 +8,54 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
     std::vector<Detection> detections;
     std::ifstream file(csvPath);
     if (!file.is_open()) {
-        std::cerr << "Error opening of " << csvPath << std::endl;
+        std::cerr << "❌ Error opening: " << csvPath << std::endl;
         return detections;
     }
 
     std::string line;
-    std::getline(file, line); // Salta header
+    std::getline(file, line); // Skip header
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        std::string name;
+        std::string name, field;
         int x, y, w, h;
-        char sep;
+        int label = -1;  // Optional: if label is included
 
         std::getline(ss, name, ',');
-        ss >> x >> sep >> y >> sep >> w >> sep >> h;
 
-        detections.push_back({name, cv::Rect(x, y, w, h)});
+        // Check how many fields per line
+        std::getline(ss, field, ',');
+        bool hasLabel = field.find_first_not_of("0123456789") == std::string::npos && line.find(',') != std::string::npos;
+
+        try {
+            if (hasLabel) {
+                label = std::stoi(field);
+                std::getline(ss, field, ','); x = std::stoi(field);
+                std::getline(ss, field, ','); y = std::stoi(field);
+                std::getline(ss, field, ','); w = std::stoi(field);
+                std::getline(ss, field, ','); h = std::stoi(field);
+            } else {
+                x = std::stoi(field);
+                std::getline(ss, field, ','); y = std::stoi(field);
+                std::getline(ss, field, ','); w = std::stoi(field);
+                std::getline(ss, field, ','); h = std::stoi(field);
+            }
+
+            // ⚠️ Defensive check
+            if (w <= 0 || h <= 0 || x < 0 || y < 0 || w > 10000 || h > 10000) {
+                std::cerr << "⚠️ Invalid bbox skipped in " << name << ": x=" << x << " y=" << y << " w=" << w << " h=" << h << "\n";
+                continue;
+            }
+
+            detections.push_back({name, cv::Rect(x, y, w, h)});
+        } catch (...) {
+            std::cerr << "⚠️ Parsing error in line: " << line << "\n";
+            continue;
+        }
     }
 
     return detections;
 }
-
 double computeIoU(const cv::Rect& pred, const cv::Rect& truth) {
     int xA = std::max(pred.x, truth.x);
     int yA = std::max(pred.y, truth.y);
