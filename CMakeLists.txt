@@ -15,9 +15,11 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
+        src/yolo_converter.cpp
         src/utils.cpp
         src/face_detector.cpp
         src/main.cpp
+        src/evaluation.cpp
 )
 
 add_executable(Project_CV ${SOURCES})
