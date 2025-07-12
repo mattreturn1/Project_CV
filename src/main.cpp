@@ -7,6 +7,7 @@
 
 namespace fs = std::filesystem;
 
+
 int main() {
     std::string cascadePath = "haar/haarcascade_frontalface_alt2.xml";
     std::string inputFolder = "data/input/images/";
