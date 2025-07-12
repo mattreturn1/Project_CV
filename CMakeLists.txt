@@ -15,6 +15,8 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 set(SOURCES
+        src/utils.cpp
+        src/face_detector.cpp
         src/main.cpp
 )
 

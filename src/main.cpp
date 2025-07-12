@@ -1,19 +1,27 @@
-#include <opencv2/opencv.hpp>
 #include <iostream>
+#include "utils.hpp"
+#include "face_detector.hpp"
 
-int main(int argc, char** argv) {
+int main() {
+    std::string cascadePath = "haar/haarcascade_frontalface_alt2.xml";
+    std::string inputFolder = "data/input/images/";
+    std::string outputFolder = "data/output/images/";
+    std::string outputCsv = "data/detections.csv";
 
-    if (argc != 2) {
-        std::cout << "Usage: " << argv[0] << " image" << std::endl;
+    createOutputFolder(outputFolder);
+    cv::CascadeClassifier faceCascade = loadCascade(cascadePath);
+
+    std::vector<cv::String> imageFiles = getImagePaths(inputFolder);
+
+    std::ofstream csv(outputCsv);
+    csv << "image,x,y,w,h\n";
+
+    for (const auto& file : imageFiles) {
+        processImage(file, outputFolder, faceCascade, csv);
     }
-    cv::Mat img = cv::imread(argv[1]);
 
-    if (img.empty()) {
-        std::cout << "Error: Image not found!" << std::endl;
-        return -1;
-    }
-    cv::imshow("Loaded Image", img);
-    cv::waitKey(0);
+    csv.close();
+    std::cout << "Face detection completed.\nResults in: " << outputFolder << " and " << outputCsv << "\n";
 
     return 0;
 }
