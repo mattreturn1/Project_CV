@@ -10,7 +10,7 @@
 namespace fs = std::filesystem;
 
 int main() {
-    std::string cascadePath = "haar/haarcascade_frontalface_alt2.xml";
+    std::string cascadePath = "haar_cascade/haarcascade_frontalface_alt2.xml";
     std::string inputFolder = "data/input/images/";
     std::string outputFolder = "data/output/images/";
     std::string outputCsv = "data/detections.csv";
