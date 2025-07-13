@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #include <iostream>
 #include <filesystem>

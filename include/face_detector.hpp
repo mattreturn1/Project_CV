@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #ifndef FACE_DETECTOR_HPP
 #define FACE_DETECTOR_HPP

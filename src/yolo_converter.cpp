@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #include <opencv2/opencv.hpp>
 #include <fstream>

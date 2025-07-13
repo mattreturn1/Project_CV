@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #include "face_detector.hpp"
 

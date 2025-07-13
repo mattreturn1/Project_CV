@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #include "evaluation.hpp"
 #include <fstream>

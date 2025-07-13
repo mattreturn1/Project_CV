@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #ifndef YOLO_CONVERTER_HPP
 #define YOLO_CONVERTER_HPP

@@ -1,4 +1,4 @@
-// Mattia Cozza
+// Author: Mattia Cozza
 
 #ifndef UTILS_HPP
 #define UTILS_HPP
