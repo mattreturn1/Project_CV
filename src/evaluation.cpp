@@ -1,10 +1,13 @@
 // Author: Mattia Cozza
 
 #include "evaluation.hpp"
+
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <unordered_map>
+#include <opencv2/opencv.hpp>
 
 // Load detections from a CSV file
 std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
@@ -81,6 +84,30 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
     for (const auto& det : preds) predMap[det.imageName].push_back(det.bbox);
 
     int TP = 0, FP = 0, FN = 0;
+
+    //Visual Debugging Output
+    std::string debugFolder = "data/output/debug/";
+    std::filesystem::create_directories(debugFolder);
+
+    for (const auto& [imageName, gtRects] : gtMap) {
+        cv::Mat img = cv::imread("data/input/images/" + imageName);
+        if (img.empty()) continue;
+
+        // Draw Ground Truth (red)
+        for (const auto& gt : gtRects) {
+            cv::rectangle(img, gt, cv::Scalar(0, 0, 255), 2);
+        }
+
+        // Draw Predictions (green)
+        for (const auto& pred : predMap[imageName]) {
+            cv::rectangle(img, pred, cv::Scalar(0, 255, 0), 2);
+        }
+
+        // Save image with annotations
+        cv::imwrite(debugFolder + imageName, img);
+    }
+
+    std::cout << "\nDebug images saved in: " << debugFolder << "\n";
 
     for (const auto& [imageName, gtRects] : gtMap) {
         std::vector<cv::Rect> predRects = predMap[imageName];
