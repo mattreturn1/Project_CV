@@ -1,6 +1,6 @@
 # Face Detection - Installation & Execution Guide
 
-This guide explains how to set up, build, and execute your face detection project inside an OpenCV Singularity container.
+Follow these steps to set up and run the project:
 
 ---
 
@@ -33,6 +33,8 @@ This guide explains how to set up, build, and execute your face detection projec
 ```bash
   cd /path/to/your/project
 ```
+  Make sure you're in the folder where you extracted the project before running any commands.
+
 ---
 ## 3. Launch the OpenCV Singularity Environment
 - **On the virtual machine, activate the containerized environment:**
@@ -40,6 +42,9 @@ This guide explains how to set up, build, and execute your face detection projec
 ```bash
   start_opencv
 ```
+
+**Note:** If this is your first time using the container, you might need to configure the Singularity container before running this command. Please refer to the setup documentation for the container configuration if necessary.
+
 ---
 ## 4. Build the Project with CMake
 
@@ -48,6 +53,7 @@ This guide explains how to set up, build, and execute your face detection projec
 ```bash
 cmake .
 ```
+This step generates the **Makefile**, which contains the rules for building your project.
 
 ### 4.2 Compile the Project
 
@@ -55,16 +61,18 @@ cmake .
 make
 ```
 
-- If you encounter errors, ensure all dependencies (e.g., OpenCV) are installed and the environment is active.
+This command compiles the project using the generated Makefile. If you encounter errors during this step, ensure you have the necessary dependencies and that the environment is correctly set up.
 
 ---
 
 ## 5️. Run the Program
 
+- Execute the compiled program:
+
 ```bash
 ./Project_CV
 ```
 
-- The executable will be in the root or build/ directory, depending on your build configuration.
+**Note:** The executable will be located in the build folder if you used an out-of-source build, or directly in the project folder if you did an in-source build.
 
 ---

@@ -3,6 +3,7 @@ project(Project_CV)
 
 set(CMAKE_CXX_STANDARD 20)
 
+#TODO change this one
 #For Linux users
 #set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
 
