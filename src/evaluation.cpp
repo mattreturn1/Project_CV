@@ -8,7 +8,7 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
     std::vector<Detection> detections;
     std::ifstream file(csvPath);
     if (!file.is_open()) {
-        std::cerr << "❌ Error opening: " << csvPath << std::endl;
+        std::cerr << "Error opening: " << csvPath << std::endl;
         return detections;
     }
 
@@ -17,39 +17,35 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        std::string name, field;
-        int x, y, w, h;
-        int label = -1;  // Optional: if label is included
+        std::vector<std::string> tokens;
+        std::string token;
 
-        std::getline(ss, name, ',');
+        while (std::getline(ss, token, ',')) {
+            tokens.push_back(token);
+        }
 
-        // Check how many fields per line
-        std::getline(ss, field, ',');
-        bool hasLabel = field.find_first_not_of("0123456789") == std::string::npos && line.find(',') != std::string::npos;
+        if (tokens.size() < 5) {
+            std::cerr << "Invalid line: " << line << "\n";
+            continue;
+        }
+
+        std::string name = tokens[0];
+        int offset = (tokens.size() == 6) ? 1 : 0;  // Se ha label, salta token[1]
 
         try {
-            if (hasLabel) {
-                label = std::stoi(field);
-                std::getline(ss, field, ','); x = std::stoi(field);
-                std::getline(ss, field, ','); y = std::stoi(field);
-                std::getline(ss, field, ','); w = std::stoi(field);
-                std::getline(ss, field, ','); h = std::stoi(field);
-            } else {
-                x = std::stoi(field);
-                std::getline(ss, field, ','); y = std::stoi(field);
-                std::getline(ss, field, ','); w = std::stoi(field);
-                std::getline(ss, field, ','); h = std::stoi(field);
-            }
+            int x = std::stoi(tokens[1 + offset]);
+            int y = std::stoi(tokens[2 + offset]);
+            int w = std::stoi(tokens[3 + offset]);
+            int h = std::stoi(tokens[4 + offset]);
 
-            // ⚠️ Defensive check
             if (w <= 0 || h <= 0 || x < 0 || y < 0 || w > 10000 || h > 10000) {
-                std::cerr << "⚠️ Invalid bbox skipped in " << name << ": x=" << x << " y=" << y << " w=" << w << " h=" << h << "\n";
+                std::cerr << "Invalid bbox skipped in " << name << ": x=" << x << " y=" << y << " w=" << w << " h=" << h << "\n";
                 continue;
             }
 
             detections.push_back({name, cv::Rect(x, y, w, h)});
         } catch (...) {
-            std::cerr << "⚠️ Parsing error in line: " << line << "\n";
+            std::cerr << "Error parsing line: " << line << "\n";
             continue;
         }
     }
@@ -72,7 +68,6 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
     auto preds = loadDetectionsFromCSV(predCsv);
     auto gts = loadDetectionsFromCSV(gtCsv);
 
-    // Raggruppa per immagine
     std::unordered_map<std::string, std::vector<cv::Rect>> gtMap, predMap;
     for (const auto& det : gts) gtMap[det.imageName].push_back(det.bbox);
     for (const auto& det : preds) predMap[det.imageName].push_back(det.bbox);
@@ -88,17 +83,26 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
             int bestIdx = -1;
             for (size_t i = 0; i < gtRects.size(); ++i) {
                 double iou = computeIoU(pred, gtRects[i]);
+                std::cout << "[DEBUG] " << imageName << ":\n";
+                std::cout << " - Pred: x=" << pred.x << " y=" << pred.y
+                          << " w=" << pred.width << " h=" << pred.height << "\n";
+                std::cout << " - GT[" << i << "]: x=" << gtRects[i].x << " y=" << gtRects[i].y
+                          << " w=" << gtRects[i].width << " h=" << gtRects[i].height << "\n";
+                std::cout << " - IoU = " << iou << "\n";
+
                 if (iou > maxIoU) {
                     maxIoU = iou;
                     bestIdx = i;
                 }
             }
 
-            if (maxIoU >= iouThreshold && !gtMatched[bestIdx]) {
+            if (maxIoU >= iouThreshold && bestIdx != -1 && !gtMatched[bestIdx]) {
                 TP++;
                 gtMatched[bestIdx] = true;
+                std::cout << "TP match with GT[" << bestIdx << "] (IoU: " << maxIoU << ")\n";
             } else {
                 FP++;
+                std::cout << "FP (best IoU: " << maxIoU << ")\n";
             }
         }
 

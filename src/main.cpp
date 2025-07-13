@@ -33,7 +33,7 @@ int main() {
     std::cout << "Face detection completed.\nResults in: " << outputFolder << " and " << outputCsv << "\n";
 
     std::string predCsv = "data/detections.csv";
-    std::string gtCsv = "data/input/ground_truth.csv"; // da creare manualmente o già fornito
+    std::string gtCsv = "data/input/ground_truth.csv";
     evaluateFaceDetection(predCsv, gtCsv, 0.5);
     return 0;
 }

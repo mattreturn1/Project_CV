@@ -18,7 +18,7 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
 
         cv::Mat image = cv::imread(imagePath);
         if (image.empty()) {
-            std::cerr << "❌ Immagine non trovata o non leggibile: " << imagePath << "\n";
+            std::cerr << "Image not found or unreadable: " << imagePath << "\n";
             continue;
         }
 
@@ -43,5 +43,5 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
     }
 
     csv.close();
-    std::cout << "✅ Conversione completata: " << outputCsv << std::endl;
+    std::cout << "Conversion completed: " << outputCsv << std::endl;
 }
