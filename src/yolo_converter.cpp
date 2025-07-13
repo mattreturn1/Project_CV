@@ -10,14 +10,14 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
     csv << "image,label,x,y,w,h\n";  // CSV header
 
     for (const auto& entry : fs::directory_iterator(labelFolder)) {
-        if (entry.path().extension() != ".txt") continue;
+        if (entry.path().extension() != ".txt") continue;  // Process only .txt label files
 
         std::string labelPath = entry.path().string();
-        std::string fileName = entry.path().stem().string(); // es: img1
+        std::string fileName = entry.path().stem().string(); // Get filename without extension
         std::string imagePath = imageFolder + "/" + fileName + ".jpg";
 
         if (!fs::exists(imagePath)) {
-            imagePath = imageFolder + "/" + fileName + ".png";  // Optional fallback
+            imagePath = imageFolder + "/" + fileName + ".png";  // Optional fallback to .png
         }
 
         cv::Mat image = cv::imread(imagePath);
@@ -37,15 +37,16 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
             std::istringstream ss(line);
             if (!(ss >> label >> cx >> cy >> w >> h)) {
                 std::cerr << "Malformed line in: " << labelPath << " → " << line << "\n";
-                continue;
+                continue;  // Skip malformed lines
             }
 
-            int abs_x = static_cast<int>((cx - w / 2.0f) * width);
-            int abs_y = static_cast<int>((cy - h / 2.0f) * height);
-            int abs_w = static_cast<int>(w * width);
-            int abs_h = static_cast<int>(h * height);
+            // Convert YOLO normalized format to absolute coordinates
+            int abs_x = static_cast<int>((cx - w / 2.0f) * static_cast<float>(width));
+            int abs_y = static_cast<int>((cy - h / 2.0f) * static_cast<float>(height));
+            int abs_w = static_cast<int>(w * static_cast<float>(width));
+            int abs_h = static_cast<int>(h * static_cast<float>(height));
 
-            // Optional bounding checks
+            // Ensure bounding boxes stay within image boundaries
             abs_x = std::max(0, abs_x);
             abs_y = std::max(0, abs_y);
             abs_w = std::min(abs_w, width - abs_x);

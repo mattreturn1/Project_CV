@@ -4,6 +4,7 @@
 #include <iostream>
 #include <unordered_map>
 
+// Load detections from a CSV file
 std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
     std::vector<Detection> detections;
     std::ifstream file(csvPath);
@@ -30,7 +31,7 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
         }
 
         std::string name = tokens[0];
-        int offset = (tokens.size() == 6) ? 1 : 0;  // Se ha label, salta token[1]
+        int offset = (tokens.size() == 6) ? 1 : 0;  // If label is present, skip token[1]
 
         try {
             int x = std::stoi(tokens[1 + offset]);
@@ -38,6 +39,7 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
             int w = std::stoi(tokens[3 + offset]);
             int h = std::stoi(tokens[4 + offset]);
 
+            // Skip invalid bounding boxes
             if (w <= 0 || h <= 0 || x < 0 || y < 0 || w > 10000 || h > 10000) {
                 std::cerr << "Invalid bbox skipped in " << name << ": x=" << x << " y=" << y << " w=" << w << " h=" << h << "\n";
                 continue;
@@ -52,6 +54,8 @@ std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath) {
 
     return detections;
 }
+
+// Compute Intersection over Union (IoU) between two bounding boxes
 double computeIoU(const cv::Rect& pred, const cv::Rect& truth) {
     int xA = std::max(pred.x, truth.x);
     int yA = std::max(pred.y, truth.y);
@@ -64,10 +68,12 @@ double computeIoU(const cv::Rect& pred, const cv::Rect& truth) {
     return unionArea > 0 ? static_cast<double>(interArea) / unionArea : 0.0;
 }
 
+// Evaluate face detection by comparing predictions with ground truth
 void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv, double iouThreshold) {
     auto preds = loadDetectionsFromCSV(predCsv);
     auto gts = loadDetectionsFromCSV(gtCsv);
 
+    // Group detections by image
     std::unordered_map<std::string, std::vector<cv::Rect>> gtMap, predMap;
     for (const auto& det : gts) gtMap[det.imageName].push_back(det.bbox);
     for (const auto& det : preds) predMap[det.imageName].push_back(det.bbox);
@@ -76,7 +82,7 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
 
     for (const auto& [imageName, gtRects] : gtMap) {
         std::vector<cv::Rect> predRects = predMap[imageName];
-        std::vector<bool> gtMatched(gtRects.size(), false);
+        std::vector<bool> gtMatched(gtRects.size(), false);  // Track matched GTs
 
         for (const auto& pred : predRects) {
             double maxIoU = 0.0;
@@ -90,12 +96,14 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
                           << " w=" << gtRects[i].width << " h=" << gtRects[i].height << "\n";
                 std::cout << " - IoU = " << iou << "\n";
 
+                // Keep track of the best IoU match
                 if (iou > maxIoU) {
                     maxIoU = iou;
-                    bestIdx = i;
+                    bestIdx = static_cast<int>(i);
                 }
             }
 
+            // If the best IoU is valid and the GT wasn't matched yet → True Positive
             if (maxIoU >= iouThreshold && bestIdx != -1 && !gtMatched[bestIdx]) {
                 TP++;
                 gtMatched[bestIdx] = true;
@@ -106,13 +114,15 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
             }
         }
 
+        // Count unmatched ground truths as False Negatives
         for (bool matched : gtMatched) {
             if (!matched) FN++;
         }
     }
 
-    double precision = TP + FP > 0 ? (double)TP / (TP + FP) : 0.0;
-    double recall = TP + FN > 0 ? (double)TP / (TP + FN) : 0.0;
+    // Calculate precision, recall, and F1-score
+    double precision = TP + FP > 0 ? static_cast<double>(TP) / (TP + FP) : 0.0;
+    double recall = TP + FN > 0 ? static_cast<double>(TP) / (TP + FN) : 0.0;
     double f1 = precision + recall > 0 ? 2 * (precision * recall) / (precision + recall) : 0.0;
 
     std::cout << "\nFace Detection Evaluation\n";
