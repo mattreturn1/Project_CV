@@ -1,3 +1,5 @@
+// Mattia Cozza
+
 #ifndef EVALUATION_HPP
 #define EVALUATION_HPP
 

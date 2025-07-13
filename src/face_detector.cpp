@@ -1,3 +1,5 @@
+// Mattia Cozza
+
 #include "face_detector.hpp"
 
 void processImage(const std::string& file,
