@@ -10,10 +10,11 @@
 struct Detection {
     std::string imageName;
     cv::Rect bbox;
+    std::string label;
 };
 
 std::vector<Detection> loadDetectionsFromCSV(const std::string& csvPath);
 double computeIoU(const cv::Rect& pred, const cv::Rect& truth);
-void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv, double iouThreshold = 0.5);
+void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv, const std::string& tpCsvOutput, double iouThreshold = 0.5);
 
 #endif

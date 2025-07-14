@@ -74,82 +74,84 @@ double computeIoU(const cv::Rect& pred, const cv::Rect& truth) {
 }
 
 // Evaluate face detection by comparing predictions with ground truth
-void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv, double iouThreshold) {
+void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv, const std::string& tpCsvOutput, double iouThreshold) {
     auto preds = loadDetectionsFromCSV(predCsv);
     auto gts = loadDetectionsFromCSV(gtCsv);
 
-    // Group detections by image
-    std::unordered_map<std::string, std::vector<cv::Rect>> gtMap, predMap;
-    for (const auto& det : gts) gtMap[det.imageName].push_back(det.bbox);
-    for (const auto& det : preds) predMap[det.imageName].push_back(det.bbox);
+    std::unordered_map<std::string, std::vector<std::pair<int, cv::Rect>>> gtMap; // label + rect
+    std::unordered_map<std::string, std::vector<cv::Rect>> predMap;
+
+    // Parsing GT with label support
+    std::ifstream gtFile(gtCsv);
+    std::string line;
+    std::getline(gtFile, line); // skip header
+
+    while (std::getline(gtFile, line)) {
+        std::stringstream ss(line);
+        std::vector<std::string> tokens;
+        std::string token;
+        while (std::getline(ss, token, ',')) tokens.push_back(token);
+        if (tokens.size() != 6) continue; // Require label
+
+        std::string name = tokens[0];
+        int label = std::stoi(tokens[1]);
+        int x = std::stoi(tokens[2]);
+        int y = std::stoi(tokens[3]);
+        int w = std::stoi(tokens[4]);
+        int h = std::stoi(tokens[5]);
+
+        gtMap[name].emplace_back(label, cv::Rect(x, y, w, h));
+    }
+
+    for (const auto& det : preds)
+        predMap[det.imageName].push_back(det.bbox);
 
     int TP = 0, FP = 0, FN = 0;
 
-    //Visual Debugging Output
-    std::string debugFolder = "data/output/debug/";
-    std::filesystem::create_directories(debugFolder);
-
-    for (const auto& [imageName, gtRects] : gtMap) {
-        cv::Mat img = cv::imread("data/input/images/" + imageName);
-        if (img.empty()) continue;
-
-        // Draw Ground Truth (red)
-        for (const auto& gt : gtRects) {
-            cv::rectangle(img, gt, cv::Scalar(0, 0, 255), 2);
-        }
-
-        // Draw Predictions (green)
-        for (const auto& pred : predMap[imageName]) {
-            cv::rectangle(img, pred, cv::Scalar(0, 255, 0), 2);
-        }
-
-        // Save image with annotations
-        cv::imwrite(debugFolder + imageName, img);
+    std::ofstream tpCsv;
+    if (!tpCsvOutput.empty()) {
+        tpCsv.open(tpCsvOutput);
+        tpCsv << "image,label,x,y,w,h\n";
     }
 
-    std::cout << "\nDebug images saved in: " << debugFolder << "\n";
-
-    for (const auto& [imageName, gtRects] : gtMap) {
+    for (const auto& [imageName, gtPairs] : gtMap) {
         std::vector<cv::Rect> predRects = predMap[imageName];
-        std::vector<bool> gtMatched(gtRects.size(), false);  // Track matched GTs
+        std::vector<bool> gtMatched(gtPairs.size(), false);
 
         for (const auto& pred : predRects) {
             double maxIoU = 0.0;
             int bestIdx = -1;
-            for (size_t i = 0; i < gtRects.size(); ++i) {
-                double iou = computeIoU(pred, gtRects[i]);
-                std::cout << "[DEBUG] " << imageName << ":\n";
-                std::cout << " - Pred: x=" << pred.x << " y=" << pred.y
-                          << " w=" << pred.width << " h=" << pred.height << "\n";
-                std::cout << " - GT[" << i << "]: x=" << gtRects[i].x << " y=" << gtRects[i].y
-                          << " w=" << gtRects[i].width << " h=" << gtRects[i].height << "\n";
-                std::cout << " - IoU = " << iou << "\n";
 
-                // Keep track of the best IoU match
+            for (size_t i = 0; i < gtPairs.size(); ++i) {
+                double iou = computeIoU(pred, gtPairs[i].second);
                 if (iou > maxIoU) {
                     maxIoU = iou;
                     bestIdx = static_cast<int>(i);
                 }
             }
 
-            // If the best IoU is valid and the GT wasn't matched yet → True Positive
             if (maxIoU >= iouThreshold && bestIdx != -1 && !gtMatched[bestIdx]) {
                 TP++;
                 gtMatched[bestIdx] = true;
-                std::cout << "TP match with GT[" << bestIdx << "] (IoU: " << maxIoU << ")\n";
+
+                // Write to CSV
+                if (tpCsv.is_open()) {
+                    int label = gtPairs[bestIdx].first;
+                    const auto& box = pred;
+                    tpCsv << imageName << "," << label << "," << box.x << "," << box.y << "," << box.width << "," << box.height << "\n";
+                }
             } else {
                 FP++;
-                std::cout << "FP (best IoU: " << maxIoU << ")\n";
             }
         }
 
-        // Count unmatched ground truths as False Negatives
         for (bool matched : gtMatched) {
             if (!matched) FN++;
         }
     }
 
-    // Calculate precision, recall, and F1-score
+    if (tpCsv.is_open()) tpCsv.close();
+
     double precision = TP + FP > 0 ? static_cast<double>(TP) / (TP + FP) : 0.0;
     double recall = TP + FN > 0 ? static_cast<double>(TP) / (TP + FN) : 0.0;
     double f1 = precision + recall > 0 ? 2 * (precision * recall) / (precision + recall) : 0.0;

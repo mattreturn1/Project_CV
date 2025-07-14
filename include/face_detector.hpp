@@ -9,7 +9,8 @@
 
 void processImage(const std::string& file,
                   const std::string& outputFolder,
-                  cv::CascadeClassifier& faceCascade,
+                  cv::CascadeClassifier& frontalCascade,
+                  cv::CascadeClassifier& profileCascade,
                   std::ofstream& csv);
 
 #endif
