@@ -78,10 +78,12 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
     auto preds = loadDetectionsFromCSV(predCsv);
     auto gts = loadDetectionsFromCSV(gtCsv);
 
-    std::unordered_map<std::string, std::vector<std::pair<int, cv::Rect>>> gtMap; // label + rect
+    // Map of ground truth detections per image: image name → vector of (label, bbox)
+    std::unordered_map<std::string, std::vector<std::pair<int, cv::Rect>>> gtMap;
+    // Map of predicted detections per image: image name → vector of bboxes
     std::unordered_map<std::string, std::vector<cv::Rect>> predMap;
 
-    // Parsing GT with label support
+    // Parse ground truth CSV with label support
     std::ifstream gtFile(gtCsv);
     std::string line;
     std::getline(gtFile, line); // skip header
@@ -103,21 +105,25 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
         gtMap[name].emplace_back(label, cv::Rect(x, y, w, h));
     }
 
+    // Organize predictions per image
     for (const auto& det : preds)
         predMap[det.imageName].push_back(det.bbox);
 
     int TP = 0, FP = 0, FN = 0;
 
+    // Open output CSV file for saving True Positives
     std::ofstream tpCsv;
     if (!tpCsvOutput.empty()) {
         tpCsv.open(tpCsvOutput);
         tpCsv << "image,label,x,y,w,h\n";
     }
 
+    // Loop through each image with ground truth
     for (const auto& [imageName, gtPairs] : gtMap) {
         std::vector<cv::Rect> predRects = predMap[imageName];
-        std::vector<bool> gtMatched(gtPairs.size(), false);
+        std::vector<bool> gtMatched(gtPairs.size(), false); // Tracks which GTs are matched
 
+        // Try to match each prediction with the best available GT
         for (const auto& pred : predRects) {
             double maxIoU = 0.0;
             int bestIdx = -1;
@@ -130,21 +136,23 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
                 }
             }
 
+            // If a match above threshold is found and GT is not already matched
             if (maxIoU >= iouThreshold && bestIdx != -1 && !gtMatched[bestIdx]) {
                 TP++;
                 gtMatched[bestIdx] = true;
 
-                // Write to CSV
+                // Save TP to CSV
                 if (tpCsv.is_open()) {
                     int label = gtPairs[bestIdx].first;
                     const auto& box = pred;
                     tpCsv << imageName << "," << label << "," << box.x << "," << box.y << "," << box.width << "," << box.height << "\n";
                 }
             } else {
-                FP++;
+                FP++; // Prediction doesn't match any GT → False Positive
             }
         }
 
+        // Count unmatched ground truth boxes as False Negatives
         for (bool matched : gtMatched) {
             if (!matched) FN++;
         }
@@ -152,10 +160,12 @@ void evaluateFaceDetection(const std::string& predCsv, const std::string& gtCsv,
 
     if (tpCsv.is_open()) tpCsv.close();
 
+    // Compute evaluation metrics
     double precision = TP + FP > 0 ? static_cast<double>(TP) / (TP + FP) : 0.0;
     double recall = TP + FN > 0 ? static_cast<double>(TP) / (TP + FN) : 0.0;
     double f1 = precision + recall > 0 ? 2 * (precision * recall) / (precision + recall) : 0.0;
 
+    // Print evaluation summary
     std::cout << "\nFace Detection Evaluation\n";
     std::cout << "True Positives: " << TP << "\n";
     std::cout << "False Positives: " << FP << "\n";
