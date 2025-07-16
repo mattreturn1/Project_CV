@@ -4,13 +4,14 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include "yolo_converter.hpp"
 
 namespace fs = std::filesystem;
 
 void convertYoloToCsv(const std::string &labelFolder, const std::string &imageFolder, const std::string &outputCsv) {
     std::ofstream csv(outputCsv);
     csv << "image,label,x,y,w,h\n"; // CSV header
-    std::cout << "Conversion from YOLO .txt to .csv started: " << std::endl;
+    std::cout << "Conversion from YOLO .txt to .csv started..." << std::endl;
 
     for (const auto &entry: fs::directory_iterator(labelFolder)) {
         if (entry.path().extension() != ".txt") continue; // Process only .txt label files

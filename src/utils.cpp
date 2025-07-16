@@ -1,9 +1,9 @@
 // Author: Mattia Cozza
 
-#include "utils.hpp"
 #include <iostream>
 #include <filesystem>
 #include <opencv2/opencv.hpp>
+#include "utils.hpp"
 
 namespace fs = std::filesystem;
 

@@ -1,7 +1,7 @@
 // Author: Mattia Cozza
 
-#include "face_detector.hpp"
 #include <fstream>
+#include "face_detector.hpp"
 
 cv::Mat preprocessImage(const cv::Mat &img) {
     cv::Mat gray;

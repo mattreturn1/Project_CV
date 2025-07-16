@@ -1,12 +1,12 @@
 // Author: Mattia Cozza
 
-#include "evaluation.hpp"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <unordered_map>
 #include <opencv2/opencv.hpp>
+#include "evaluation.hpp"
 
 // Load detections from a CSV file
 std::vector<Detection> loadDetectionsFromCSV(const std::string &csvPath) {
