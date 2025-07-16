@@ -10,16 +10,28 @@
 
 namespace fs = std::filesystem;
 
-int main() {
+int main(int argc, char* argv[]) {
     std::string cascadePathFrontal = "haar_cascade/haarcascade_frontalface_alt2.xml";
     std::string cascadePathProfile = "haar_cascade/haarcascade_profileface.xml";
-    std::string inputFolder = "data/input/images/";
+
+    // Default input root folder
+    std::string inputRoot = "data/input/";
+    if (argc > 1) {
+        inputRoot = argv[1];
+        if (inputRoot.back() != '/' && inputRoot.back() != '\\')
+            inputRoot += '/';
+    }
+
+    std::string inputImages = inputRoot + "images/";
+    std::string inputLabels = inputRoot + "labels/";
+    std::string groundTruthCsv = inputRoot + "ground_truth.csv";
+
     std::string outputFolder = "data/output/images/";
     std::string outputCsv = "data/output/alldetections.csv";
 
     // Convert YOLO labels to CSV format if ground truth CSV does not exist
-    if (!fs::exists("data/input/ground_truth.csv")) {
-        convertYoloToCsv("data/input/labels/", "data/input/images/", "data/input/ground_truth.csv");
+    if (!fs::exists(groundTruthCsv)) {
+        convertYoloToCsv(inputLabels, inputImages, groundTruthCsv);
     }
 
     // Create the output folder if it doesn't exist
@@ -29,8 +41,8 @@ int main() {
     cv::CascadeClassifier frontalCascade = loadCascade(cascadePathFrontal);
     cv::CascadeClassifier profileCascade = loadCascade(cascadePathProfile);
 
-    // Get list of all image file paths from input folder
-    std::vector<cv::String> imageFiles = getImagePaths(inputFolder);
+    // Get list of all image file paths from input images folder
+    std::vector<cv::String> imageFiles = getImagePaths(inputImages);
 
     // Open CSV file to save detection results
     std::ofstream csv(outputCsv);
@@ -45,10 +57,8 @@ int main() {
     std::cout << "Face detection completed.\nResults in: " << outputFolder << " and " << outputCsv << "\n";
 
     // Evaluate detections against ground truth using IoU threshold
-    std::string predCsv = "data/output/alldetections.csv";
-    std::string gtCsv = "data/input/ground_truth.csv";
     std::string tpCsv = "data/detections.csv";
-    evaluateFaceDetection(predCsv, gtCsv, tpCsv, 0.5);
+    evaluateFaceDetection(outputCsv, groundTruthCsv, tpCsv, 0.5);
 
     return 0;
 }

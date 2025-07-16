@@ -73,6 +73,23 @@ This command compiles the project using the generated Makefile. If you encounter
 ./Project_CV
 ```
 
-**Note:** The executable will be located in the build folder if you used an out-of-source build, or directly in the project folder if you did an in-source build.
+**Note:** By default, the program will use the input folder at **data/input/** (which must contain two subfolders: **images/** and **labels/**).
+
+### 5.1 Run the Program with a Custom Input Folder
+
+You can specify a custom input folder by passing it as a command-line argument. The folder must contain the following subdirectories:
+
+To run the program with a custom input folder:
+
+```bash
+./Project_CV path/to/your_input_folder/
+```
+Example:
+
+```bash
+./Project_CV data/input/
+```
+
+**Note:** The input folder must contain two subfolders: **images/** and **labels/** (in YOLO format .txt).
 
 ---
