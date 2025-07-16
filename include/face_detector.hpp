@@ -5,7 +5,6 @@
 
 #include <string>
 #include <opencv2/opencv.hpp>
-#include <fstream>
 
 cv::Mat preprocessImage(const cv::Mat &img);
 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include "utils.hpp"
 #include "face_detector.hpp"
 #include "evaluation.hpp"
