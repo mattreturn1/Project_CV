@@ -5,6 +5,6 @@
 
 #include <string>
 
-void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFolder, const std::string& outputCsv);
+void convertYoloToCsv(const std::string &labelFolder, const std::string &imageFolder, const std::string &outputCsv);
 
 #endif

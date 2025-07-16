@@ -7,20 +7,20 @@
 
 namespace fs = std::filesystem;
 
-void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFolder, const std::string& outputCsv) {
+void convertYoloToCsv(const std::string &labelFolder, const std::string &imageFolder, const std::string &outputCsv) {
     std::ofstream csv(outputCsv);
-    csv << "image,label,x,y,w,h\n";  // CSV header
+    csv << "image,label,x,y,w,h\n"; // CSV header
     std::cout << "Conversion from YOLO .txt to .csv started: " << std::endl;
 
-    for (const auto& entry : fs::directory_iterator(labelFolder)) {
-        if (entry.path().extension() != ".txt") continue;  // Process only .txt label files
+    for (const auto &entry: fs::directory_iterator(labelFolder)) {
+        if (entry.path().extension() != ".txt") continue; // Process only .txt label files
 
         std::string labelPath = entry.path().string();
         std::string fileName = entry.path().stem().string(); // Get filename without extension
         std::string imagePath = imageFolder + "/" + fileName + ".jpg";
 
         if (!fs::exists(imagePath)) {
-            imagePath = imageFolder + "/" + fileName + ".png";  // Optional fallback to .png
+            imagePath = imageFolder + "/" + fileName + ".png"; // Optional fallback to .png
         }
 
         cv::Mat image = cv::imread(imagePath);
@@ -40,7 +40,7 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
             std::istringstream ss(line);
             if (!(ss >> label >> cx >> cy >> w >> h)) {
                 std::cerr << "Malformed line in: " << labelPath << " → " << line << "\n";
-                continue;  // Skip malformed lines
+                continue; // Skip malformed lines
             }
 
             // Convert YOLO normalized format to absolute coordinates
@@ -55,7 +55,8 @@ void convertYoloToCsv(const std::string& labelFolder, const std::string& imageFo
             abs_w = std::min(abs_w, width - abs_x);
             abs_h = std::min(abs_h, height - abs_y);
 
-            csv << fileName + ".jpg" << "," << label << "," << abs_x << "," << abs_y << "," << abs_w << "," << abs_h << "\n";
+            csv << fileName + ".jpg" << "," << label << "," << abs_x << "," << abs_y << "," << abs_w << "," << abs_h <<
+                    "\n";
         }
     }
 
