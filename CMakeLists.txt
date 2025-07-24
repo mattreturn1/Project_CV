@@ -3,12 +3,7 @@ project(Project_CV)
 
 set(CMAKE_CXX_STANDARD 20)
 
-#TODO change this one
-#For Linux users
-#set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
-
-#For Windows users
-set(OpenCV_DIR "C:/opencv/build/x64/vc16/lib")
+set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
 
 find_package(OpenCV REQUIRED)
 
